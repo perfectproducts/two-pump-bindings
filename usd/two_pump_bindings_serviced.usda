@@ -1,0 +1,11 @@
+#usda 1.0
+(
+    "As serviced: P-101 replaced (wilo_asset SN-A1003). The BMS device ID of the slot is unchanged, so the live binding is unchanged."
+    defaultPrim = "AIF"
+    metersPerUnit = 1
+    upAxis = "Z"
+    subLayers = [
+        @./bms_overlay.usda@,
+        @../../two-pump-example/usd/AIF_Hall1_serviced.usda@
+    ]
+)

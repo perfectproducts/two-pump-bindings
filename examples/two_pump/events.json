@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "assets": [
+    {"source": "bms", "id": "fws-bms:device/2101"},
+    {"source": "bms", "id": "fws-bms:device/2102"},
+    {"source": "bms", "id": "fws-bms:device/3001"}
+  ],
+  "events": [
+    {
+      "type": "org.aif.fws.pump.v1",
+      "source": "bms",
+      "assets": ["fws-bms:device/2101", "fws-bms:device/2102"],
+      "metrics": [
+        {"name": "pump.speed", "unit": "rpm"},
+        {"name": "pump.flow", "unit": "L/min"},
+        {"name": "pump.head", "unit": "m"},
+        {"name": "pump.powerP1", "unit": "W"},
+        {"name": "pump.trip", "unit": "", "alarm": "source"},
+        {"name": "pump.standbyRunning", "unit": "", "alarm": "source"}
+      ]
+    },
+    {
+      "type": "org.aif.fws.cdu.v1",
+      "source": "bms",
+      "assets": ["fws-bms:device/3001"],
+      "metrics": [
+        {"name": "cdu.tcsSupplyTemperature", "unit": "K"},
+        {"name": "cdu.tcsReturnTemperature", "unit": "K"},
+        {"name": "cdu.fwsValvePosition", "unit": "1"},
+        {"name": "cdu.heatTransfer", "unit": "W"}
+      ]
+    }
+  ]
+}

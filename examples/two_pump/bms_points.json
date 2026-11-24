@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "source": "bms",
+  "comment": "Simulated BMS / BACnet point list. Each device is identified by its own BMS device ID (the source-issued ID). The CSV replay plays the role of the field bus; unit conversion to the declared AIF units happens here, at the adapter boundary.",
+  "time_column": "t",
+  "devices": [
+    {
+      "id": "fws-bms:device/2101",
+      "event_type": "org.aif.fws.pump.v1",
+      "points": {
+        "pump.speed":          {"bacnet": "analog-input,1",  "column": "n1"},
+        "pump.flow":           {"bacnet": "analog-input,2",  "column": "V1", "scale": 16.666666666666668},
+        "pump.head":           {"bacnet": "analog-input,3",  "column": "H1"},
+        "pump.powerP1":        {"bacnet": "analog-input,4",  "column": "P1_1"},
+        "pump.trip":           {"bacnet": "binary-input,1",  "column": "alarm", "above": 0.5},
+        "pump.standbyRunning": {"bacnet": "binary-value,1",  "constant": 0}
+      },
+      "alarms": ["pump.trip", "pump.standbyRunning"]
+    },
+    {
+      "id": "fws-bms:device/2102",
+      "event_type": "org.aif.fws.pump.v1",
+      "points": {
+        "pump.speed":          {"bacnet": "analog-input,1",  "column": "n2"},
+        "pump.flow":           {"bacnet": "analog-input,2",  "column": "V2", "scale": 16.666666666666668},
+        "pump.head":           {"bacnet": "analog-input,3",  "column": "H2"},
+        "pump.powerP1":        {"bacnet": "analog-input,4",  "column": "P1_2"},
+        "pump.trip":           {"bacnet": "binary-input,1",  "constant": 0},
+        "pump.standbyRunning": {"bacnet": "binary-value,1",  "column": "n2", "above": 1.0}
+      },
+      "alarms": ["pump.trip", "pump.standbyRunning"]
+    },
+    {
+      "id": "fws-bms:device/3001",
+      "event_type": "org.aif.fws.cdu.v1",
+      "points": {
+        "cdu.tcsSupplyTemperature": {"bacnet": "analog-input,10", "column": "T_tcs_sup", "offset": 273.15},
+        "cdu.tcsReturnTemperature": {"bacnet": "analog-input,11", "column": "T_tcs_ret", "offset": 273.15},
+        "cdu.fwsValvePosition":     {"bacnet": "analog-output,1", "column": "valve"},
+        "cdu.heatTransfer":         {"bacnet": "analog-input,12", "column": "Q_hx_kW", "scale": 1000}
+      },
+      "alarms": []
+    }
+  ]
+}

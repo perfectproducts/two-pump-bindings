@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "rules": [
+    {"metric": "cdu.tcsSupplyTemperature", "threshold": 318.15}
+  ]
+}

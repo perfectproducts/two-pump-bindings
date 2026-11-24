@@ -1,0 +1,188 @@
+#usda 1.0
+(
+    "Minimal stand-in for two-pump-example/usd/AIF_Hall1.usda: same prim paths and assetInfo.sourceIds (SYNTHETIC IDs), box geometry only."
+    defaultPrim = "AIF"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "AIF" (
+    kind = "group"
+)
+{
+    def Xform "Hall1" (
+        kind = "group"
+    )
+    {
+        def Xform "FWS" (
+            kind = "group"
+        )
+        {
+            def Xform "Loop1" (
+                kind = "group"
+            )
+            {
+                def Xform "P_101" (
+                    assetInfo = {
+                        dictionary sourceIds = {
+                            dictionary aif_location = {
+                                string id = "AIF-01/FWS/L1/P-101"
+                            }
+                            dictionary bms = {
+                                string id = "fws-bms:device/2101"
+                            }
+                            string role = "physical"
+                            dictionary wilo_asset = {
+                                string id = "https://id.example-wilo.com/asset/2204744/SN-A1001"
+                                string kind = "instance"
+                            }
+                            dictionary wilo_product = {
+                                string id = "https://id.example-wilo.com/type/2204744"
+                                string kind = "type"
+                            }
+                        }
+                    }
+                    customData = {
+                        dictionary aif = {
+                            string dutyRole = "duty"
+                            string tag = "P-101"
+                        }
+                    }
+                )
+                {
+                    double3 xformOp:translate = (0, 0, 0.6)
+                    uniform token[] xformOpOrder = ["xformOp:translate"]
+
+                    def Cube "Body"
+                    {
+                        color3f[] primvars:displayColor = [(0.1, 0.35, 0.6)]
+                        double size = 0.6
+                    }
+                }
+
+                def Xform "P_102" (
+                    assetInfo = {
+                        dictionary sourceIds = {
+                            dictionary aif_location = {
+                                string id = "AIF-01/FWS/L1/P-102"
+                            }
+                            dictionary bms = {
+                                string id = "fws-bms:device/2102"
+                            }
+                            string role = "physical"
+                            dictionary wilo_asset = {
+                                string id = "https://id.example-wilo.com/asset/2204744/SN-A1002"
+                                string kind = "instance"
+                            }
+                            dictionary wilo_product = {
+                                string id = "https://id.example-wilo.com/type/2204744"
+                                string kind = "type"
+                            }
+                        }
+                    }
+                    customData = {
+                        dictionary aif = {
+                            string dutyRole = "standby"
+                            string tag = "P-102"
+                        }
+                    }
+                )
+                {
+                    double3 xformOp:translate = (0, 1.5, 0.6)
+                    uniform token[] xformOpOrder = ["xformOp:translate"]
+
+                    def Cube "Body"
+                    {
+                        color3f[] primvars:displayColor = [(0.1, 0.35, 0.6)]
+                        double size = 0.6
+                    }
+                }
+            }
+        }
+
+        def Xform "WhiteSpace" (
+            kind = "group"
+        )
+        {
+            def Xform "Pod1" (
+                kind = "group"
+            )
+            {
+                def Xform "Racks"
+                {
+                }
+
+                def Xform "CDU_01" (
+                    assetInfo = {
+                        dictionary sourceIds = {
+                            dictionary aif_location = {
+                                string id = "AIF-01/WS/POD1/CDU-01"
+                            }
+                        }
+                    }
+                )
+                {
+                    double3 xformOp:translate = (40.6, 0, 0)
+                    uniform token[] xformOpOrder = ["xformOp:translate"]
+
+                    def Cube "Body"
+                    {
+                        color3f[] primvars:displayColor = [(0.5, 0.5, 0.5)]
+                        double size = 1.2
+                    }
+                }
+            }
+        }
+    }
+
+    def Xform "Plant" (
+        kind = "group"
+    )
+    {
+        def Xform "Chiller_01" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary aif_location = {
+                        string id = "AIF-01/CHW/CH-01"
+                    }
+                }
+            }
+        )
+        {
+            double3 xformOp:translate = (-7.5, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+
+    def Xform "Schematics"
+    {
+        def Xform "FWS_PID"
+        {
+            def BasisCurves "P_101_sym" (
+                assetInfo = {
+                    dictionary sourceIds = {
+                        dictionary aif_location = {
+                            string id = "AIF-01/FWS/L1/P-101"
+                        }
+                        dictionary bms = {
+                            string id = "fws-bms:device/2101"
+                        }
+                        string role = "symbol"
+                        dictionary wilo_asset = {
+                            string id = "https://id.example-wilo.com/asset/2204744/SN-A1001"
+                            string kind = "instance"
+                        }
+                    }
+                }
+            )
+            {
+                int[] curveVertexCounts = [5]
+                point3f[] points = [(0.25, 0, 0), (0, 0.25, 0), (-0.25, 0, 0), (0, -0.25, 0), (0.25, 0, 0)]
+                uniform token type = "linear"
+                float[] widths = [0.02]
+                double3 xformOp:translate = (0, -6, 0.01)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+        }
+    }
+}

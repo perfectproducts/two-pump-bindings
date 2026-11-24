@@ -1,0 +1,28 @@
+#usda 1.0
+(
+    "Two-pump bindings overlay. The sibling scene gives the CDU no BMS device ID, so this layer adds the (SYNTHETIC) ID that the replayed BMS issues for it. Nothing else is authored here: pump IDs come from the sibling as_built.usda."
+)
+
+over "AIF"
+{
+    over "Hall1"
+    {
+        over "WhiteSpace"
+        {
+            over "Pod1"
+            {
+                over "CDU_01" (
+                    assetInfo = {
+                        dictionary sourceIds = {
+                            dictionary bms = {
+                                string id = "fws-bms:device/3001"
+                            }
+                        }
+                    }
+                )
+                {
+                }
+            }
+        }
+    }
+}

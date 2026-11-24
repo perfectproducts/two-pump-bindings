@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "displays": [
+    {"id": "pump_speed", "metric": "pump.speed", "title": "Speed", "kind": "gauge", "range": [0, 3600], "decimals": 0},
+    {"id": "pump_flow", "metric": "pump.flow", "title": "Flow", "kind": "gauge", "range": [0, 500], "decimals": 0},
+    {"id": "pump_head", "metric": "pump.head", "title": "Head", "kind": "gauge", "range": [0, 20], "decimals": 1},
+    {"id": "pump_power", "metric": "pump.powerP1", "title": "Power P1", "kind": "gauge", "range": [0, 2500], "decimals": 0},
+    {"id": "pump_trip", "metric": "pump.trip", "title": "Trip", "kind": "label", "decimals": 0},
+    {"id": "pump_standby_running", "metric": "pump.standbyRunning", "title": "Standby running", "kind": "label", "decimals": 0},
+    {"id": "cdu_tcs_supply", "metric": "cdu.tcsSupplyTemperature", "title": "TCS supply", "kind": "gauge", "range": [303.15, 333.15], "decimals": 2, "placement": "hud-top-left"},
+    {"id": "cdu_tcs_return", "metric": "cdu.tcsReturnTemperature", "title": "TCS return", "kind": "gauge", "range": [303.15, 333.15], "decimals": 2, "placement": "hud-top-left"},
+    {"id": "cdu_valve", "metric": "cdu.fwsValvePosition", "title": "FWS valve", "kind": "gauge", "range": [0, 1], "decimals": 2, "placement": "hud-top-left"},
+    {"id": "cdu_heat", "metric": "cdu.heatTransfer", "title": "Heat transfer", "kind": "gauge", "range": [0, 600000], "decimals": 0, "placement": "hud-top-left"}
+  ],
+  "scene": [
+    {"source": "bms", "id": "fws-bms:device/2101",
+     "display_color": {"mode": "state", "metric": "pump.trip",
+                       "colors": {"normal": [0.05, 0.55, 0.25], "alarm": [0.9, 0.05, 0.02], "unknown": [0.3, 0.3, 0.3]}}},
+    {"source": "bms", "id": "fws-bms:device/2102",
+     "display_color": {"mode": "state", "metric": "pump.standbyRunning",
+                       "colors": {"normal": [0.05, 0.55, 0.25], "alarm": [0.95, 0.6, 0.05], "unknown": [0.3, 0.3, 0.3]}}},
+    {"source": "bms", "id": "fws-bms:device/3001",
+     "display_color": {"mode": "gradient", "metric": "cdu.tcsSupplyTemperature", "range": [313.15, 323.15],
+                       "colors": {"low": [0.05, 0.2, 0.9], "high": [0.9, 0.05, 0.02], "unknown": [0.3, 0.3, 0.3]}}}
+  ],
+  "fault_codes": [
+    {"code": "F101", "name": "PUMP_TRIP", "severity": "alarm", "metric": "pump.trip",
+     "text": "Pump tripped (BMS fault input); duty lost"},
+    {"code": "W201", "name": "STANDBY_RUNNING", "severity": "warning", "metric": "pump.standbyRunning",
+     "text": "Standby pump running; duty pump unavailable, no redundancy"},
+    {"code": "A301", "name": "TCS_SUPPLY_HIGH", "severity": "alarm", "metric": "cdu.tcsSupplyTemperature",
+     "text": "TCS supply temperature above the edge limit (rules.json)"}
+  ],
+  "usd_attributes": {
+    "pump.speed": "aif:runtime:speed",
+    "pump.flow": "aif:runtime:flow",
+    "pump.head": "aif:runtime:head",
+    "pump.powerP1": "aif:runtime:powerP1",
+    "cdu.tcsSupplyTemperature": "aif:runtime:tcsSupplyTemperature",
+    "cdu.fwsValvePosition": "aif:runtime:fwsValvePosition"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "bindings": [
+    {"source": "bms", "id": "fws-bms:device/2101", "label": "P-101 duty pump (Stratos GIGA2.0-I 65/1-37/4,0)"},
+    {"source": "bms", "id": "fws-bms:device/2102", "label": "P-102 standby pump (Stratos GIGA2.0-I 65/1-37/4,0)"},
+    {"source": "bms", "id": "fws-bms:device/3001", "label": "CDU-01 (Pod 1, 4x GB300 NVL72)"}
+  ]
+}

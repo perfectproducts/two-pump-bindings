@@ -1,0 +1,148 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: Apache-2.0. New file for the two-pump adaptation of the NVIDIA Composable Bindings reference sample. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FWS Loop 1 Live</title>
+<style>
+:root {
+  --bg: #f4f6f8; --panel: #ffffff; --ink: #17242d; --muted: #5b6b76; --line: #d8dfe4;
+  --normal: #0f7a52; --alarm: #c62a1c; --warning: #b86e00; --unknown: #8a959c;
+  --s1: #2563b8; --s2: #c2410c; --s3: #0f766e;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #11171b; --panel: #1a2228; --ink: #e5ecef; --muted: #9aa8b1; --line: #2c3840;
+          --normal: #3fbf8a; --alarm: #ff6b5c; --warning: #f0a53a; --unknown: #7d888f;
+          --s1: #6ea8ff; --s2: #ff9a5c; --s3: #4fd1c5; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { padding: 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+h1 { font-size: 18px; margin: 0 0 4px; }
+.sub { color: var(--muted); font-size: 13px; }
+main { padding: 16px; display: grid; gap: 16px; max-width: 1280px; margin: 0 auto; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; min-width: 0; }
+.card h2 { font-size: 15px; margin: 0 0 2px; }
+.id { color: var(--muted); font: 12px ui-monospace, Consolas, monospace; margin-bottom: 10px; word-break: break-all; }
+.metric { display: grid; grid-template-columns: 1fr auto 74px; gap: 8px; align-items: center; padding: 4px 0; border-top: 1px solid var(--line); }
+.metric .v { font-variant-numeric: tabular-nums; text-align: right; }
+.bar { grid-column: 1 / -1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; }
+.pill { font-size: 11px; font-weight: 600; text-align: center; border-radius: 10px; padding: 1px 6px; color: #fff; }
+.normal { background: var(--normal); } .alarm { background: var(--alarm); } .unknown { background: var(--unknown); } .warning { background: var(--warning); }
+.faults { display: grid; gap: 8px; }
+.fault { border-left: 4px solid var(--alarm); padding: 8px 10px; background: var(--panel); border-radius: 4px; border-top: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.fault.warning { border-left-color: var(--warning); background: var(--panel); }
+.none { color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.scroll { overflow-x: auto; }
+svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
+.legend b { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 4px; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.restart { font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--s1); background: var(--s1); color: #fff; cursor: pointer; }
+.restart:hover { filter: brightness(1.1); }
+.restart:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.restart:disabled { opacity: .6; cursor: progress; }
+#restart-note { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>FWS Loop 1 &middot; duty/standby pumps and CDU</h1>
+    <div class="sub" id="status">Connecting&hellip;</div>
+  </div>
+  <div id="controls" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span id="restart-note"></span>
+    <button type="button" class="restart" id="restart" title="Restart the BMS replay from t = 0 and clear the chart and fault log">Restart replay</button>
+  </div>
+</header>
+<main>
+  <section>
+    <h2 style="font-size:15px;margin:0 0 8px">Active faults (shared code table)</h2>
+    <div class="faults" id="faults"></div>
+  </section>
+  <section class="grid" id="cards"></section>
+  <section class="card">
+    <h2>Trip sequence</h2>
+    <div class="legend"><span><b style="background:var(--s1)"></b>P-101 speed</span><span><b style="background:var(--s2)"></b>P-102 speed</span><span><b style="background:var(--s3)"></b>TCS supply</span><span><b style="background:var(--alarm)"></b>sample in ALARM (edge/source decision)</span></div>
+    <div id="chart"></div>
+  </section>
+  <section class="card scroll">
+    <h2>Fault log</h2>
+    <table><thead><tr><th>Observed</th><th>Asset</th><th>Code</th><th>Transition</th><th>Value</th></tr></thead><tbody id="log"></tbody></table>
+  </section>
+</main>
+<script>
+const STATIC_STATE = /*STATIC_STATE*/null;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+function chart(series) {
+  const P1 = 'fws-bms:device/2101|pump.speed', P2 = 'fws-bms:device/2102|pump.speed', T = 'fws-bms:device/3001|cdu.tcsSupplyTemperature';
+  const all = [P1, P2, T].flatMap(k => series[k] || []);
+  if (!all.length) return '<p class="none">Waiting for samples&hellip;</p>';
+  const t0 = Math.min(...all.map(p => p[0])), t1 = Math.max(...all.map(p => p[0]), t0 + 1);
+  const W = 900, H = 300, L = 54, R = 54, top = 12, mid = 150, bot = 276;
+  const x = t => L + (t - t0) / (t1 - t0) * (W - L - R);
+  const line = (pts, y, color) => pts.length ? `<polyline fill="none" stroke="${color}" stroke-width="2" points="${pts.map(p => x(p[0]).toFixed(1) + ',' + y(p[1]).toFixed(1)).join(' ')}"/>` : '';
+  const ys = v => mid - 8 - v / 3600 * (mid - 8 - top);
+  const temps = (series[T] || []).map(p => p[1]);
+  const tlo = Math.min(310, ...temps), thi = Math.max(330, ...temps);
+  const yt = v => bot - (v - tlo) / (thi - tlo) * (bot - mid - 12);
+  const alarms = (series[T] || []).filter(p => p[2]).map(p => `<circle cx="${x(p[0]).toFixed(1)}" cy="${yt(p[1]).toFixed(1)}" r="2.2" fill="${css('--alarm')}"/>`).join('');
+  const trip = (series[P1] || []).find(p => p[2]);
+  const axis = css('--muted');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pump speeds and TCS supply temperature over time">
+    <text x="4" y="${top + 10}" fill="${axis}" font-size="11">rpm</text><text x="4" y="${mid + 22}" fill="${axis}" font-size="11">K</text>
+    <line x1="${L}" x2="${W - R}" y1="${mid - 8}" y2="${mid - 8}" stroke="${css('--line')}"/><line x1="${L}" x2="${W - R}" y1="${bot}" y2="${bot}" stroke="${css('--line')}"/>
+    <text x="${L - 6}" y="${ys(3600) + 4}" fill="${axis}" font-size="11" text-anchor="end">3600</text><text x="${L - 6}" y="${ys(0) + 4}" fill="${axis}" font-size="11" text-anchor="end">0</text>
+    <text x="${L - 6}" y="${yt(thi) + 4}" fill="${axis}" font-size="11" text-anchor="end">${thi.toFixed(0)}</text><text x="${L - 6}" y="${yt(tlo) + 4}" fill="${axis}" font-size="11" text-anchor="end">${tlo.toFixed(0)}</text>
+    ${trip ? `<line x1="${x(trip[0])}" x2="${x(trip[0])}" y1="${top}" y2="${bot}" stroke="${css('--alarm')}" stroke-dasharray="4 3"/><text x="${x(trip[0]) + 4}" y="${top + 10}" fill="${css('--alarm')}" font-size="11">P-101 trip (F101)</text>` : ''}
+    ${line(series[P1] || [], ys, css('--s1'))}${line(series[P2] || [], ys, css('--s2'))}${line(series[T] || [], yt, css('--s3'))}${alarms}
+    <text x="${L}" y="${H - 4}" fill="${axis}" font-size="11">${new Date(t0 * 1000).toISOString().slice(11, 19)}Z</text>
+    <text x="${W - R}" y="${H - 4}" fill="${axis}" font-size="11" text-anchor="end">${new Date(t1 * 1000).toISOString().slice(11, 19)}Z (observation time)</text></svg>`;
+}
+
+function render(s) {
+  document.getElementById('status').textContent = `${s.status || ''} · run ${s.run || '-'} · config revision ${s.config_revision ?? '-'} · ${s.generated || ''}${STATIC_STATE ? ' · static snapshot' : ''}`;
+  const btn = document.getElementById('restart');
+  btn.disabled = Boolean(s.restart_requested);
+  document.getElementById('restart-note').textContent = s.restart_requested ? 'Waiting for the replay to restart…' : '';
+  const active = s.active_faults || [];
+  document.getElementById('faults').innerHTML = active.length ? active.map(f =>
+    `<div class="fault ${f.severity}"><b>${esc(f.code)} ${esc(f.name)}</b> &middot; ${esc(f.label)}<div class="sub">${esc(f.text)} &middot; ${esc(f.source)}/${esc(f.id)} &middot; since ${esc(f.observed)}</div></div>`).join('')
+    : '<div class="none">No active faults.</div>';
+  document.getElementById('cards').innerHTML = (s.rows || []).map(r => `<div class="card"><h2>${esc(r.label)}</h2><div class="id">${esc(r.source)} / ${esc(r.id)}</div>` +
+    r.displays.map(d => `<div class="metric"><span>${esc(d.title)}</span><span class="v">${esc(d.text)}</span><span class="pill ${d.state}">${d.state.toUpperCase()}</span>` +
+      (d.kind === 'gauge' ? `<div class="bar"><i class="${d.state}" style="width:${(d.fraction * 100).toFixed(1)}%"></i></div>` : '') + '</div>').join('') + '</div>').join('');
+  document.getElementById('chart').innerHTML = chart(s.series || {});
+  document.getElementById('log').innerHTML = (s.fault_log || []).slice().reverse().map(e =>
+    `<tr><td>${esc(e.observed)}</td><td>${esc(e.label.split(' (')[0])}</td><td>${esc(e.code)} ${esc(e.name)}</td><td>${esc(e.from.toUpperCase())} &rarr; <span class="pill ${e.to}">${esc(e.to.toUpperCase())}</span></td><td>${esc(e.value)}</td></tr>`).join('') || '<tr><td colspan="5" class="none">No transitions yet.</td></tr>';
+}
+
+async function poll() {
+  try { render(await (await fetch('/state', {cache: 'no-store'})).json()); }
+  catch (e) { document.getElementById('status').textContent = 'Dashboard server unreachable; values stale'; }
+  setTimeout(poll, 500);
+}
+document.getElementById('restart').addEventListener('click', async () => {
+  const btn = document.getElementById('restart'), note = document.getElementById('restart-note');
+  btn.disabled = true;
+  try {
+    const r = await fetch('/restart', {method: 'POST'});
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    note.textContent = 'Waiting for the replay to restart…';
+  } catch (e) {
+    note.textContent = `Restart request failed (${e.message}). Is the dashboard server running?`;
+    btn.disabled = false;
+  }
+});
+if (STATIC_STATE) { document.getElementById('controls').style.display = 'none'; render(STATIC_STATE); } else poll();
+</script>
+</body>
+</html>

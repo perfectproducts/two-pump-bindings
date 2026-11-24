@@ -1,0 +1,11 @@
+#usda 1.0
+(
+    "Composable-bindings view of the two-pump example: the sibling scene plus the CDU BMS-ID overlay. Values are never stored here; consumers compose them in session layers."
+    defaultPrim = "AIF"
+    metersPerUnit = 1
+    upAxis = "Z"
+    subLayers = [
+        @./bms_overlay.usda@,
+        @../../two-pump-example/usd/AIF_Hall1.usda@
+    ]
+)

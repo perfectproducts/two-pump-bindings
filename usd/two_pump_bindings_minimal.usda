@@ -1,0 +1,11 @@
+#usda 1.0
+(
+    "Fallback when the sibling two-pump-example scene is not available: self-contained minimal stage with the same prim paths and sourceIds."
+    defaultPrim = "AIF"
+    metersPerUnit = 1
+    upAxis = "Z"
+    subLayers = [
+        @./bms_overlay.usda@,
+        @./minimal/AIF_Hall1_minimal.usda@
+    ]
+)
