@@ -51,6 +51,10 @@ def main(argv=None):
     p.add_argument('--html-port', type=int, default=9871)
     p.add_argument('--html-out', type=Path, help='html client: also write a static HTML snapshot here on exit')
     p.add_argument('--usd-out', type=Path, help='usd client: export the live session layer here')
+    p.add_argument('--metadata', choices=['aas', 'twin'],
+                   help='html client: asset passports from the AAS server (aas) or the OpenUSD twin documents (twin)')
+    p.add_argument('--twin-dir', type=Path, help='html client: pulled DPP layers for --metadata twin '
+                   '(default: ../variant-synctwin/.mirror)')
     a = p.parse_args(argv)
     a.state = a.state.resolve()
     if a.command == 'adapt':
@@ -86,7 +90,7 @@ def main(argv=None):
         from clients.html_client.app import run
         from .bms_replay import RESTART_FILE
         return run(Client(a.state / 'client.json', a.view), stop, a.duration, port=a.html_port, out=a.html_out,
-                   restart_file=a.state / RESTART_FILE)
+                   restart_file=a.state / RESTART_FILE, metadata=a.metadata, stage=a.stage, twin_dir=a.twin_dir)
     if a.command == 'usd':
         from clients.usd_client.app import run
         return run(Client(a.state / 'client.json', a.view), stop, a.duration, stage=a.stage, out=a.usd_out)

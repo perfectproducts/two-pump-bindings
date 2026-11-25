@@ -48,6 +48,25 @@ header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify
 .restart:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .restart:disabled { opacity: .6; cursor: progress; }
 #restart-note { font-size: 12px; color: var(--muted); }
+.asset { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin: -4px 0 8px; font-size: 12px; color: var(--muted); }
+.asset button { font: inherit; font-size: 12px; padding: 2px 8px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.asset button[aria-pressed="true"] { border-color: var(--s1); color: var(--s1); font-weight: 600; }
+.card.selected { outline: 2px solid var(--s1); outline-offset: -1px; }
+.passport-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+.badge { font-size: 11px; font-weight: 600; border-radius: 10px; padding: 2px 8px; border: 1px solid currentColor; white-space: nowrap; }
+.badge.aas { color: var(--s1); } .badge.twin { color: var(--s3); }
+.pp { display: grid; gap: 16px; grid-template-columns: minmax(0, 260px) minmax(0, 1fr) minmax(0, 1fr); margin-top: 12px; }
+@media (max-width: 900px) { .pp { grid-template-columns: 1fr; } }
+.pp img { width: 100%; border-radius: 6px; border: 1px solid var(--line); background: #fff; }
+.pp .label-img { width: 120px; margin-top: 8px; }
+.pp h3 { font-size: 13px; margin: 0 0 6px; color: var(--muted); font-weight: 600; }
+.src { font-size: 10px; border-radius: 8px; padding: 0 5px; white-space: nowrap; }
+.src.instance { background: color-mix(in srgb, var(--normal) 18%, transparent); color: var(--normal); }
+.src.type { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--warning); }
+.note { font-size: 12px; color: var(--warning); margin-top: 4px; }
+details.trace { margin-top: 12px; font-size: 12px; color: var(--muted); }
+details.trace li.bad { color: var(--alarm); }
+.unresolved { border-left: 4px solid var(--alarm); padding: 8px 10px; }
 </style>
 </head>
 <body>
@@ -67,6 +86,7 @@ header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify
     <div class="faults" id="faults"></div>
   </section>
   <section class="grid" id="cards"></section>
+  <section class="card" id="passport" hidden></section>
   <section class="card">
     <h2>Trip sequence</h2>
     <div class="legend"><span><b style="background:var(--s1)"></b>P-101 speed</span><span><b style="background:var(--s2)"></b>P-102 speed</span><span><b style="background:var(--s3)"></b>TCS supply</span><span><b style="background:var(--alarm)"></b>sample in ALARM (edge/source decision)</span></div>
@@ -108,7 +128,68 @@ function chart(series) {
     <text x="${W - R}" y="${H - 4}" fill="${axis}" font-size="11" text-anchor="end">${new Date(t1 * 1000).toISOString().slice(11, 19)}Z (observation time)</text></svg>`;
 }
 
+let selected = null, manual = false, lastFaultKey = '';
+const passports = {};
+
+async function loadPassport(key) {
+  const [source, id] = key.split('|');
+  try {
+    passports[key] = await (await fetch(`/asset?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`, {cache: 'no-store'})).json();
+  } catch (e) { passports[key] = {status: 'unavailable', trace: [{step: 'client', detail: String(e), ok: false}]}; }
+  renderPassport();
+}
+
+function select(key, byUser) {
+  if (byUser) manual = true;
+  selected = key;
+  if (!passports[key]) { passports[key] = {status: 'loading'}; loadPassport(key); }
+  renderPassport();
+}
+
+const srcTag = src => `<span class="src ${src}" title="${src === 'type' ? 'inferred from the product type' : 'authored for this serial'}">${src === 'type' ? 'type' : 'instance'}</span>`;
+const rows = list => list.map(r => `<tr><td>${esc(r.label)}</td><td>${esc(r.value)}${r.unit ? ' ' + esc(r.unit) : ''}</td><td>${srcTag(r.src)}</td></tr>`).join('');
+
+function renderPassport() {
+  // The page polls every 500 ms: only touch the DOM when the passport actually changes (no image reloads).
+  const box = document.getElementById('passport');
+  const html = passportHtml();
+  box.hidden = html === null;
+  if (html !== null && box.dataset.html !== html) { box.innerHTML = html; box.dataset.html = html; }
+}
+
+function passportHtml() {
+  const box = {set innerHTML(h) { this.html = h; }, html: null};
+  build(box);
+  return box.html;
+}
+
+function build(box) {
+  const row = (window.lastState?.rows || []).find(r => `${r.source}|${r.id}` === selected);
+  if (!selected || !row) return;
+  const v = passports[selected] || {status: 'loading'};
+  const meta = window.lastState?.metadata || {};
+  const badge = `<span class="badge ${esc(meta.kind)}" title="${esc(meta.detail)}">${esc(meta.label)}</span>`;
+  const head = `<div class="passport-head"><h2>Digital product passport &middot; ${esc(row.label.split(' (')[0])}${v.serial ? ' &middot; ' + esc(v.serial) : ''}</h2>${badge}</div>`;
+  const trace = (v.trace || []).length ? `<details class="trace"><summary>Where this came from (${v.trace.length} steps)</summary><ol>${v.trace.map(t => `<li class="${t.ok ? '' : 'bad'}"><b>${esc(t.step)}</b> ${esc(t.detail)}</li>`).join('')}</ol></details>` : '';
+  if (v.status === 'loading') { box.innerHTML = head + '<p class="none">Resolving asset&hellip;</p>'; return; }
+  if (v.status !== 'resolved') {
+    box.innerHTML = head + `<div class="unresolved"><b>${esc(v.status === 'unbound' ? 'No asset bound' : v.status === 'unavailable' ? 'Metadata source unavailable' : 'Unresolved identity')}</b>`
+      + `<div class="sub">${esc(row.asset_id || '')} &mdash; ${v.status === 'unresolved' ? 'the scene names this asset, but the source has no record for it (not the same as a missing value).' : 'see trace.'}</div></div>` + trace;
+    return;
+  }
+  const pcf = v.pcf ? `<tr><td>Product carbon footprint</td><td>${esc(v.pcf.value)} ${esc(v.pcf.unit)} (${esc(v.pcf.phases || '')})</td><td>${srcTag(v.pcf.src)}</td></tr>` : '';
+  box.innerHTML = head + `<div class="sub">${esc(v.title)} &middot; ${esc(v.asset_id)}${v.markings?.length ? ' &middot; ' + v.markings.map(esc).join(', ') : ''}</div>
+    <div class="pp">
+      <div>${v.image?.url ? `<img src="${esc(v.image.url)}" alt="Product image ${esc(v.title)}">` : ''}
+        ${v.id_label?.url ? `<div class="sub" style="margin-top:8px">Nameplate ID link (DataMatrix)</div><img class="label-img" src="${esc(v.id_label.url)}" alt="DataMatrix ID link ${esc(v.serial)}">` : ''}</div>
+      <div><h3>Nameplate</h3><table>${rows(v.nameplate)}${pcf}</table>${v.pcf?.note ? `<div class="note">${esc(v.pcf.note)}</div>` : ''}
+        <h3 style="margin-top:12px">Documents</h3><table>${v.documents.map(d => `<tr><td>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>` : esc(d.title)}</td><td>${esc(d.class || '')}</td><td>${srcTag(d.src)}</td></tr>`).join('')}</table></div>
+      <div><h3>Technical data</h3><table>${rows(v.technical)}</table></div>
+    </div>` + trace;
+}
+
 function render(s) {
+  window.lastState = s;
   document.getElementById('status').textContent = `${s.status || ''} · run ${s.run || '-'} · config revision ${s.config_revision ?? '-'} · ${s.generated || ''}${STATIC_STATE ? ' · static snapshot' : ''}`;
   const btn = document.getElementById('restart');
   btn.disabled = Boolean(s.restart_requested);
@@ -117,10 +198,20 @@ function render(s) {
   document.getElementById('faults').innerHTML = active.length ? active.map(f =>
     `<div class="fault ${f.severity}"><b>${esc(f.code)} ${esc(f.name)}</b> &middot; ${esc(f.label)}<div class="sub">${esc(f.text)} &middot; ${esc(f.source)}/${esc(f.id)} &middot; since ${esc(f.observed)}</div></div>`).join('')
     : '<div class="none">No active faults.</div>';
-  document.getElementById('cards').innerHTML = (s.rows || []).map(r => `<div class="card"><h2>${esc(r.label)}</h2><div class="id">${esc(r.source)} / ${esc(r.id)}</div>` +
+  if (s.metadata) {   // default selection: the bound asset with an active fault, else the first bound asset
+    const faulty = active.map(f => `${f.source}|${f.id}`).filter(k => (s.rows || []).some(r => `${r.source}|${r.id}` === k && r.asset_id));
+    const faultKey = faulty.join(',');
+    if (faultKey && faultKey !== lastFaultKey) { manual = false; }
+    lastFaultKey = faultKey;
+    const first = (s.rows || []).find(r => r.asset_id);
+    if (!manual) { const key = faulty[0] || (first && `${first.source}|${first.id}`); if (key && key !== selected) select(key, false); }
+  }
+  document.getElementById('cards').innerHTML = (s.rows || []).map(r => `<div class="card${s.metadata && `${r.source}|${r.id}` === selected ? ' selected' : ''}"><h2>${esc(r.label)}</h2><div class="id">${esc(r.source)} / ${esc(r.id)}</div>` +
+    (r.asset_id ? `<div class="asset"><span title="${esc(r.asset_id)}">asset ${esc(r.asset_id.split('/').pop())}</span><button type="button" data-key="${esc(r.source)}|${esc(r.id)}" aria-pressed="${`${r.source}|${r.id}` === selected}">Passport</button></div>` : '') +
     r.displays.map(d => `<div class="metric"><span>${esc(d.title)}</span><span class="v">${esc(d.text)}</span><span class="pill ${d.state}">${d.state.toUpperCase()}</span>` +
       (d.kind === 'gauge' ? `<div class="bar"><i class="${d.state}" style="width:${(d.fraction * 100).toFixed(1)}%"></i></div>` : '') + '</div>').join('') + '</div>').join('');
   document.getElementById('chart').innerHTML = chart(s.series || {});
+  renderPassport();
   document.getElementById('log').innerHTML = (s.fault_log || []).slice().reverse().map(e =>
     `<tr><td>${esc(e.observed)}</td><td>${esc(e.label.split(' (')[0])}</td><td>${esc(e.code)} ${esc(e.name)}</td><td>${esc(e.from.toUpperCase())} &rarr; <span class="pill ${e.to}">${esc(e.to.toUpperCase())}</span></td><td>${esc(e.value)}</td></tr>`).join('') || '<tr><td colspan="5" class="none">No transitions yet.</td></tr>';
 }
@@ -130,6 +221,10 @@ async function poll() {
   catch (e) { document.getElementById('status').textContent = 'Dashboard server unreachable; values stale'; }
   setTimeout(poll, 500);
 }
+document.getElementById('cards').addEventListener('click', e => {
+  const b = e.target.closest('button[data-key]');
+  if (b) select(b.dataset.key, true);
+});
 document.getElementById('restart').addEventListener('click', async () => {
   const btn = document.getElementById('restart'), note = document.getElementById('restart-note');
   btn.disabled = true;
