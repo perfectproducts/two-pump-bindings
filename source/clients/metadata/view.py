@@ -100,6 +100,14 @@ def build(asset_id, elements, source, trace, shell_id=None):
                           'url': file_url(f), 'src': (f or title or get(base)).src})
     markings = [get(f'Nameplate/Markings/{k}/MarkingName').value for k in sorted(_children(elements, 'Nameplate/Markings'))
                 if get(f'Nameplate/Markings/{k}/MarkingName') and k != 'IdentificationLink']
+    materials = []
+    for k in sorted(_children(elements, 'MaterialComposition')):
+        base = f'MaterialComposition/{k}'
+        name, material, mass = get(f'{base}/ComponentName'), get(f'{base}/MaterialName'), get(f'{base}/ComponentMass')
+        if name:
+            materials.append({'component': name.value, 'material': getattr(material, 'value', None),
+                              'mass': fmt(mass.value) if mass else None, 'unit': getattr(mass, 'unit', None),
+                              'src': name.src})
     model = get('SimulationModels/PumpModel/ModelFile')
     params = get('SimulationModels/ParameterSet/ParameterFile')
     val = lambda path: getattr(get(path), 'value', None)
@@ -127,7 +135,7 @@ def build(asset_id, elements, source, trace, shell_id=None):
         'image': {'url': file_url(image), 'src': image.src} if image else None,
         'id_label': {'url': file_url(label), 'src': label.src} if label else None,
         'nameplate': nameplate, 'technical': technical, 'documents': documents, 'markings': markings,
-        'simulation': simulation,
+        'simulation': simulation, 'materials': materials,
         'pcf': None if pcf is None else {
             'value': fmt(pcf.value), 'unit': 'kg CO2e', 'src': pcf.src,
             'basis': getattr(get(f'{PCF}/ValueBasis'), 'value', None),
