@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ssd:SystemStructureDescription xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon" xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription" version="1.0" name="FWS_Loop1">
+  <ssd:System name="AIF-01/FWS/L1">
+    <ssd:Elements>
+      <ssd:Component name="GB300_Pod1" source="fmus/FWS_GB300Load.fmu" type="application/x-fmu-sharedlibrary">
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/WS/POD1/RACKS" usdPrim="/AIF/Hall1/WhiteSpace/Pod1/Racks" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="TCS_Pod1" source="fmus/FWS_TCSLoop.fmu" type="application/x-fmu-sharedlibrary">
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/WS/POD1/TCS" usdPrim="/AIF/Hall1/WhiteSpace/Pod1/TCS" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="CDU_01" source="fmus/FWS_CDU.fmu" type="application/x-fmu-sharedlibrary">
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/WS/POD1/CDU-01" usdPrim="/AIF/Hall1/WhiteSpace/Pod1/CDU_01" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="FWS_Supply" source="fmus/FWS_Pipe.fmu" type="application/x-fmu-sharedlibrary">
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/FWS/L1/PIPE-S" usdPrim="/AIF/Hall1/FWS/Loop1/Piping/FWS_Supply" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="FWS_Return" source="fmus/FWS_Pipe.fmu" type="application/x-fmu-sharedlibrary">
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/FWS/L1/PIPE-R" usdPrim="/AIF/Hall1/FWS/Loop1/Piping/FWS_Return" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="P_101" source="fmus/FWS_StratosGIGA2Pump.fmu" type="application/x-fmu-sharedlibrary">
+        <ssd:ParameterBindings>
+          <ssd:ParameterBinding source="params/SN-A1001.ssv" />
+        </ssd:ParameterBindings>
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/FWS/L1/P-101" usdPrim="/AIF/Hall1/FWS/Loop1/P_101" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="P_102" source="fmus/FWS_StratosGIGA2Pump.fmu" type="application/x-fmu-sharedlibrary">
+        <ssd:ParameterBindings>
+          <ssd:ParameterBinding source="params/SN-A1002.ssv" />
+        </ssd:ParameterBindings>
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/FWS/L1/P-102" usdPrim="/AIF/Hall1/FWS/Loop1/P_102" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="Hydraulics" source="fmus/FWS_LoopHydraulics.fmu" type="application/x-fmu-sharedlibrary">
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/FWS/L1" usdPrim="/AIF/Hall1/FWS/Loop1" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="Chiller_01" source="fmus/FWS_Chiller.fmu" type="application/x-fmu-sharedlibrary">
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/CHW/CH-01" usdPrim="/AIF/Plant/Chiller_01" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+      <ssd:Component name="BMS" source="fmus/FWS_BMSController.fmu" type="application/x-fmu-sharedlibrary">
+        <ssc:Annotations>
+          <ssc:Annotation type="org.example.usdBinding">
+            <usdBinding aif_location="AIF-01/BMS/FWS-L1" usdPrim="/AIF/Hall1/FWS/Loop1/BMS" />
+          </ssc:Annotation>
+        </ssc:Annotations>
+      </ssd:Component>
+    </ssd:Elements>
+    <ssd:Connections>
+      <ssd:Connection startElement="GB300_Pod1" startConnector="Q_it" endElement="TCS_Pod1" endConnector="Q_it" />
+      <ssd:Connection startElement="CDU_01" startConnector="Q_hx" endElement="TCS_Pod1" endConnector="Q_hx" />
+      <ssd:Connection startElement="TCS_Pod1" startConnector="T_ret" endElement="CDU_01" endConnector="T_tcs_ret" />
+      <ssd:Connection startElement="Hydraulics" startConnector="V" endElement="CDU_01" endConnector="V_flow" />
+      <ssd:Connection startElement="Chiller_01" startConnector="T_sup" endElement="CDU_01" endConnector="T_fws_in" />
+      <ssd:Connection startElement="Hydraulics" startConnector="V" endElement="FWS_Supply" endConnector="V_flow" />
+      <ssd:Connection startElement="Hydraulics" startConnector="V" endElement="FWS_Return" endConnector="V_flow" />
+      <ssd:Connection startElement="Hydraulics" startConnector="V" endElement="Chiller_01" endConnector="V_flow" />
+      <ssd:Connection startElement="CDU_01" startConnector="T_fws_out" endElement="Chiller_01" endConnector="T_ret" />
+      <ssd:Connection startElement="Hydraulics" startConnector="V1" endElement="P_101" endConnector="V_flow" />
+      <ssd:Connection startElement="Hydraulics" startConnector="V2" endElement="P_102" endConnector="V_flow" />
+      <ssd:Connection startElement="P_101" startConnector="dp0" endElement="Hydraulics" endConnector="dp0_1" />
+      <ssd:Connection startElement="P_101" startConnector="k_p" endElement="Hydraulics" endConnector="k_p1" />
+      <ssd:Connection startElement="P_102" startConnector="dp0" endElement="Hydraulics" endConnector="dp0_2" />
+      <ssd:Connection startElement="P_102" startConnector="k_p" endElement="Hydraulics" endConnector="k_p2" />
+      <ssd:Connection startElement="BMS" startConnector="run1" endElement="P_101" endConnector="run" />
+      <ssd:Connection startElement="BMS" startConnector="run2" endElement="P_102" endConnector="run" />
+    </ssd:Connections>
+    <ssc:Annotations>
+      <ssc:Annotation type="org.example.sumNode">
+        <sum target="Hydraulics.R" terms="FWS_Supply.k + FWS_Return.k + CDU_01.k + Chiller_01.k" />
+      </ssc:Annotation>
+    </ssc:Annotations>
+  </ssd:System>
+</ssd:SystemStructureDescription>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Per-serial parameter set for P-102. SYNTHETIC: shut-off head 1 % below catalog. -->
+<ssv:ParameterSet xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues"
+                  xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
+                  version="1.0" name="https://id.example-wilo.com/asset/2204744/SN-A1002">
+  <ssv:Parameters>
+    <ssv:Parameter name="H0"><ssv:Real value="36.6" unit="m"/></ssv:Parameter>
+    <ssv:Parameter name="a"><ssv:Real value="0.0061"/></ssv:Parameter>
+    <ssv:Parameter name="etaPeak"><ssv:Real value="0.615"/></ssv:Parameter>
+    <ssv:Parameter name="H_design"><ssv:Real value="18" unit="m"/></ssv:Parameter>
+    <ssv:Parameter name="Q_design"><ssv:Real value="42" unit="m3/h"/></ssv:Parameter>
+  </ssv:Parameters>
+  <ssc:Annotations>
+    <ssc:Annotation type="org.example.sourceIds">
+      <sourceIds wilo_product="https://id.example-wilo.com/type/2204744"
+                 wilo_asset="https://id.example-wilo.com/asset/2204744/SN-A1002"/>
+    </ssc:Annotation>
+  </ssc:Annotations>
+</ssv:ParameterSet>

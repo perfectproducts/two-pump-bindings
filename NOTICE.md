@@ -17,7 +17,7 @@ Files added for this adaptation are marked `New file for the two-pump adaptation
 | Unchanged upstream | `LICENSE`, `reference.py`, `.gitignore`, `config/bindings.json`, `examples/default/`, `examples/voltage/`, `examples/line_gateway/`, `source/clients/__init__.py`, `source/clients/console_client/__init__.py`, `__main__.py`, `source/composable_bindings/**` except the files below, `tests/test_source_contract.py`, `docs/upstream/*` (copies of upstream docs for reference) |
 | Copied, moved | `source/clients/usd_client/scene_colors.py` (from the Kit extension `omni.example.reference_client`, content unchanged) |
 | Modified upstream | `source/composable_bindings/reference/cli.py`, `config.py`, `client.py`, `source/clients/console_client/app.py`, `tests/test_scene_colors_usd.py` (module path only) |
-| New | `source/composable_bindings/reference/bms_replay.py`, `faults.py`, `source/clients/html_client/*`, `source/clients/usd_client/*` (except `scene_colors.py`), `examples/two_pump/*`, `usd/*`, `tests/test_two_pump.py`, `README.md`, `NOTICE.md`, `requirements.txt` |
+| New | `source/composable_bindings/reference/bms_replay.py`, `faults.py`, `source/clients/html_client/*`, `source/clients/usd_client/*` (except `scene_colors.py`), `examples/two_pump/*`, `usd/*`, `tests/test_two_pump.py`, `README.md`, `NOTICE.md`, `requirements.txt`, `requirements-sim.txt`, `sim/*` (FMU co-simulation: Modelica source, generated FMUs, SSP system, FMPy master) |
 
 Not copied: the Kit extension UI modules, the ovui client, launch scripts, screenshots,
 diagrams and `third_party_licenses/` (they cover the optional ovui/CUDA runtimes, which this

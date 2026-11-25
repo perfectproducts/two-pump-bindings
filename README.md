@@ -105,7 +105,7 @@ python reference.py usd                                 # 4: USD consumer (aif:r
 python reference.py usdcheck                            # rename/reparent + double-count checks
 ```
 
-Options: `--csv PATH` (default `../two-pump-example/out/results.csv`; a missing file falls back
+Options: `--csv PATH` (default `sim/out/results.csv`, the FMU co-simulation below; a missing file falls back
 to a synthetic generator with the same sequence), `--speed`, `--step N`, `--loop`,
 `--duration S`, `--html-out FILE` (static HTML snapshot on exit), `--stage PATH`,
 `--usd-out DIR`. Start consumers before or after the replay: a late joiner receives the
@@ -117,6 +117,39 @@ Tests (upstream contract tests + upstream scene-color tests + two-pump tests):
 ```powershell
 $env:PYTHONPATH = "source"; .venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
+
+## FMU co-simulation (`sim/`)
+
+The replayed BMS data is the output of an FMU co-simulation of the loop, included here so the
+whole chain can be rerun: Modelica components -> FMI 2.0 co-simulation FMUs -> SSP system ->
+FMPy master -> `sim/out/results.csv` -> BMS replay -> composable bindings.
+
+| File | What it is |
+| --- | --- |
+| `sim/modelica/FWS.mo` | 8 causal Modelica components: GB300 load, rack cooling loop (TCS), CDU, pipe, pump (Wilo-Stratos GIGA2.0-I, illustrative curve), loop hydraulics, chiller, BMS controller |
+| `sim/fmus/*.fmu` | the same components exported with OpenModelica 1.26 as FMI 2.0 co-simulation FMUs (win64 binaries, C sources included) |
+| `sim/system.py` | instances and wiring: 10 instances of 8 FMU types, both pumps share one pump FMU |
+| `sim/FWS_Loop1.ssd`, `sim/params/*.ssv` | the system as SSP, and one parameter set per pump serial |
+| `sim/pipe_geometry.usda` | `pipe:*` attributes taken from the AI factory scene: pipe lengths, diameters and loss coefficients, and the loop inertance computed from them |
+| `sim/run_cosim.py` | FMPy master, fixed step 0.02 s, Gauss-Seidel coupling |
+| `sim/build_fmus.py`, `sim/make_ssd.py` | rebuild the FMUs (needs OpenModelica) and the SSD |
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r requirements-sim.txt
+python sim/run_cosim.py                 # -> sim/out/results.csv (+ charts, runtime.usda)
+python sim/run_cosim.py --delay 30      # longer standby delay
+python sim/run_cosim.py --sweep         # peak rack supply temperature vs. standby delay
+```
+
+Default scenario: the GB300 load steps from 40 % to 100 % (186 -> 464 kW) at 60 s, P-101 trips at
+180 s, P-102 starts after a 15 s standby delay. Results: P-101 22.3 m3/h at 13.8 m before the trip,
+P-102 22.7 m3/h at 13.9 m after the takeover, rack supply peak 53.7 °C, 18.5 s above the 45 °C
+alarm. `sim/out/results.csv` is committed so the replay works without running the co-simulation;
+a rerun reproduces it byte for byte.
+
+The FMUs carry Windows (win64) binaries. On Linux or macOS, rebuild them from `sim/modelica/FWS.mo`
+with `python sim/build_fmus.py` (OpenModelica), or compile the C sources inside each FMU for your
+platform. All plant data is illustrative, not Wilo data.
 
 ## Verification (2026-11-22)
 

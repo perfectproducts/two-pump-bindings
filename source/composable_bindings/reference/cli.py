@@ -42,7 +42,7 @@ def main(argv=None):
     p.add_argument('--no-console', action='store_true')
     p.add_argument('--mapping', type=Path, help='JSON source adapter field mapping')
     p.add_argument('--input', default='-', help='JSON Lines source records (default: stdin)')
-    p.add_argument('--csv', type=Path, help='Co-simulation results.csv replayed as the BMS (default: ../two-pump-example/out/results.csv)')
+    p.add_argument('--csv', type=Path, help='Co-simulation results.csv replayed as the BMS (default: sim/out/results.csv)')
     p.add_argument('--speed', type=float, default=10., help='BMS replay speed factor (default 10x)')
     p.add_argument('--step', type=int, default=1, help='Replay every Nth CSV row (default 1)')
     p.add_argument('--loop', action='store_true', help='Restart the BMS replay when it ends')
