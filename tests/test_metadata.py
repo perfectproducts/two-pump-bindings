@@ -124,5 +124,29 @@ class HttpEndpoints(unittest.TestCase):
             server.server_close()
 
 
+def ovstorage_up():
+    try:
+        urllib.request.urlopen('http://localhost:8080/api/v1/services', timeout=1)
+        return True
+    except (urllib.error.URLError, OSError):
+        return False
+
+
+@unittest.skipIf(Usd is None or not ovstorage_up() or not basyx_up(), 'ovstorage stack or BaSyx not running')
+class OvStorageMatchesAas(unittest.TestCase):
+    def test_same_passport_from_storage_api(self):
+        from clients.metadata.aas import AasSource
+        from clients.metadata.ovstorage import OvStorageSource
+        import tempfile
+        with tempfile.TemporaryDirectory() as cache:
+            ovs, aas = OvStorageSource(cache=cache), AasSource()
+            for sn in ('SN-A1001', 'SN-A1002', 'SN-A1003'):
+                self.assertEqual(comparable(ovs.record(A + sn)), comparable(aas.record(A + sn)), sn)
+            view = ovs.record(A + 'SN-A1002')
+            self.assertEqual(view['source']['kind'], 'ovstorage')
+            self.assertEqual(view['trace'][0]['step'], 'storage')
+            self.assertIn('0 downloaded', view['trace'][0]['detail'])     # second sync: nothing changed
+
+
 if __name__ == '__main__':
     unittest.main()

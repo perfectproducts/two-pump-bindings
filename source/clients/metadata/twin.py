@@ -4,7 +4,7 @@
 """Metadata from the digital twin: OpenUSD DPP record layers (needs pxr).
 
 The layers are the SyncTwin registry's copy of the DPP (synctwin://projects/wilo-two-pump), pulled
-into a local folder by `variant-synctwin/pull.py`. An instance layer references its type layer, so
+into a local folder by `variant-synctwin/pull.py`. An instance layer specializes a class prim that references its type layer, so
 USD composition does the type fallback; the property stack tells instance values from inferred ones.
 Mapping: dpp-common/dpp/to_usd.py.
 """

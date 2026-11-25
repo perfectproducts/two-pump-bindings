@@ -8,7 +8,7 @@ element map, then build the view here, so a client cannot tell them apart except
 
 Element map: {"Nameplate/SerialNumber": Element, "Nameplate/ManufacturerName@en": Element, ...}
   where paths are idShort paths and `src` says whether the value is the instance's own ("instance")
-  or comes from the product type ("type": AAS derivedFrom / USD reference), i.e. inferred.
+  or comes from the product type ("type": AAS derivedFrom / USD specializes), i.e. inferred.
 """
 from dataclasses import dataclass
 import re
@@ -100,6 +100,21 @@ def build(asset_id, elements, source, trace, shell_id=None):
                           'url': file_url(f), 'src': (f or title or get(base)).src})
     markings = [get(f'Nameplate/Markings/{k}/MarkingName').value for k in sorted(_children(elements, 'Nameplate/Markings'))
                 if get(f'Nameplate/Markings/{k}/MarkingName') and k != 'IdentificationLink']
+    model = get('SimulationModels/PumpModel/ModelFile')
+    params = get('SimulationModels/ParameterSet/ParameterFile')
+    val = lambda path: getattr(get(path), 'value', None)
+    simulation = None if model is None else {
+        'model': {'url': file_url(model), 'src': model.src,
+                  'standard': val('SimulationModels/PumpModel/StandardFormat'),
+                  'tool': val('SimulationModels/PumpModel/GenerationTool'),
+                  'platform': val('SimulationModels/PumpModel/Platform'),
+                  'inputs': val('SimulationModels/PumpModel/InputVariables'),
+                  'outputs': val('SimulationModels/PumpModel/OutputVariables')},
+        'parameters': None if params is None else {
+            'url': file_url(params), 'src': params.src,
+            'applies_to': val('SimulationModels/ParameterSet/AppliesTo'),
+            'values': val('SimulationModels/ParameterSet/ParameterValues')},
+    }
     pcf = get(f'{PCF}/PCFCO2eq')
     image = get('TechnicalData/GeneralInformation/ProductImage')
     label = get('Nameplate/Markings/IdentificationLink/MarkingFile')
@@ -112,6 +127,7 @@ def build(asset_id, elements, source, trace, shell_id=None):
         'image': {'url': file_url(image), 'src': image.src} if image else None,
         'id_label': {'url': file_url(label), 'src': label.src} if label else None,
         'nameplate': nameplate, 'technical': technical, 'documents': documents, 'markings': markings,
+        'simulation': simulation,
         'pcf': None if pcf is None else {
             'value': fmt(pcf.value), 'unit': 'kg CO2e', 'src': pcf.src,
             'basis': getattr(get(f'{PCF}/ValueBasis'), 'value', None),

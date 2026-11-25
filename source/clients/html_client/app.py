@@ -262,7 +262,7 @@ def main(argv=None):
     parser.add_argument('--port', type=int, default=9871)
     parser.add_argument('--out', type=Path)
     parser.add_argument('--duration', type=float, default=0)
-    parser.add_argument('--metadata', choices=['aas', 'twin'], help='asset metadata source (default: none)')
+    parser.add_argument('--metadata', choices=['aas', 'twin', 'ovstorage'], help='asset metadata source (default: none)')
     parser.add_argument('--stage', type=Path, help='scene for the binding -> asset join')
     parser.add_argument('--twin-dir', type=Path, help='pulled OpenUSD DPP documents (variant-synctwin/.mirror)')
     args = parser.parse_args(argv)

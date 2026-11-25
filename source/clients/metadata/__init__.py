@@ -4,7 +4,8 @@
 """Asset metadata for bound assets, from one of two interchangeable sources:
 
   aas   AAS infrastructure (discovery, registry, repository)      -> AasSource
-  twin  OpenUSD DPP documents from the SyncTwin registry          -> TwinSource
+  twin       OpenUSD DPP documents from the SyncTwin registry     -> TwinSource
+  ovstorage  OpenUSD DPP documents in Omniverse Storage (Storage APIs, via Discovery) -> OvStorageSource
 
 Live state keeps flowing through the bindings; records/documents are fetched on demand by asset id.
 """
@@ -21,4 +22,7 @@ def make_source(kind, twin_dir=None):
     if kind == 'twin':
         from .twin import TwinSource
         return TwinSource(twin_dir or DEFAULT_TWIN_DIR)
-    raise ValueError(f'unknown metadata source {kind!r} (aas | twin)')
+    if kind == 'ovstorage':
+        from .ovstorage import OvStorageSource
+        return OvStorageSource()
+    raise ValueError(f'unknown metadata source {kind!r} (aas | twin | ovstorage)')

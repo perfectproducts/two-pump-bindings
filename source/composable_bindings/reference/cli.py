@@ -51,8 +51,9 @@ def main(argv=None):
     p.add_argument('--html-port', type=int, default=9871)
     p.add_argument('--html-out', type=Path, help='html client: also write a static HTML snapshot here on exit')
     p.add_argument('--usd-out', type=Path, help='usd client: export the live session layer here')
-    p.add_argument('--metadata', choices=['aas', 'twin'],
-                   help='html client: asset passports from the AAS server (aas) or the OpenUSD twin documents (twin)')
+    p.add_argument('--metadata', choices=['aas', 'twin', 'ovstorage'],
+                   help='html client: asset passports from the AAS server (aas), the OpenUSD twin pulled from '
+                        'SyncTwin (twin) or the OpenUSD twin in Omniverse Storage (ovstorage)')
     p.add_argument('--twin-dir', type=Path, help='html client: pulled DPP layers for --metadata twin '
                    '(default: ../variant-synctwin/.mirror)')
     a = p.parse_args(argv)

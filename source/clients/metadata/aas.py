@@ -127,7 +127,7 @@ class AasSource:
             if shell is None:
                 return build(asset_id, {}, self.label, trace)
             derived = (shell.get('derivedFrom') or {}).get('keys', [{}])[0].get('value')
-            if derived:   # type first, instance overrides (same rule as the USD reference)
+            if derived:   # type first, instance overrides (same rule as the USD specializes arc)
                 tshell, t_hrefs = self._shell(derived, trace)
                 if tshell is not None:
                     self._submodels(tshell, t_hrefs, 'type', elements, trace)

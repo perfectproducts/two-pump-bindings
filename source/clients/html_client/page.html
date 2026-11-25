@@ -54,7 +54,7 @@ header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify
 .card.selected { outline: 2px solid var(--s1); outline-offset: -1px; }
 .passport-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
 .badge { font-size: 11px; font-weight: 600; border-radius: 10px; padding: 2px 8px; border: 1px solid currentColor; white-space: nowrap; }
-.badge.aas { color: var(--s1); } .badge.twin { color: var(--s3); }
+.badge.aas { color: var(--s1); } .badge.twin { color: var(--s3); } .badge.ovstorage { color: var(--s2); }
 .pp { display: grid; gap: 16px; grid-template-columns: minmax(0, 260px) minmax(0, 1fr) minmax(0, 1fr); margin-top: 12px; }
 @media (max-width: 900px) { .pp { grid-template-columns: 1fr; } }
 .pp img { width: 100%; border-radius: 6px; border: 1px solid var(--line); background: #fff; }
@@ -184,7 +184,11 @@ function build(box) {
         ${v.id_label?.url ? `<div class="sub" style="margin-top:8px">Nameplate ID link (DataMatrix)</div><img class="label-img" src="${esc(v.id_label.url)}" alt="DataMatrix ID link ${esc(v.serial)}">` : ''}</div>
       <div><h3>Nameplate</h3><table>${rows(v.nameplate)}${pcf}</table>${v.pcf?.note ? `<div class="note">${esc(v.pcf.note)}</div>` : ''}
         <h3 style="margin-top:12px">Documents</h3><table>${v.documents.map(d => `<tr><td>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>` : esc(d.title)}</td><td>${esc(d.class || '')}</td><td>${srcTag(d.src)}</td></tr>`).join('')}</table></div>
-      <div><h3>Technical data</h3><table>${rows(v.technical)}</table></div>
+      <div><h3>Technical data</h3><table>${rows(v.technical)}</table>
+        ${v.simulation ? `<h3 style="margin-top:12px">Simulation model</h3><table>
+          <tr><td><a href="${esc(v.simulation.model.url)}">Pump FMU</a></td><td>${esc(v.simulation.model.standard || '')} &middot; ${esc(v.simulation.model.platform || '')}</td><td>${srcTag(v.simulation.model.src)}</td></tr>
+          ${v.simulation.parameters ? `<tr><td><a href="${esc(v.simulation.parameters.url)}">Parameter set (.ssv)</a></td><td>${esc(v.simulation.parameters.values || '')}</td><td>${srcTag(v.simulation.parameters.src)}</td></tr>` : ''}
+          <tr><td>Inputs / outputs</td><td>${esc(v.simulation.model.inputs || '')} &rarr; ${esc(v.simulation.model.outputs || '')}</td><td></td></tr></table>` : ''}</div>
     </div>` + trace;
 }
 
