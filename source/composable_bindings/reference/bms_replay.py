@@ -27,7 +27,10 @@ from .model import utc
 from .transport import request
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_CSV = ROOT.parent / 'two-pump-example' / 'out' / 'results.csv'
+# The FMU co-simulation in sim/ writes sim/out/results.csv (committed); the sibling project's copy is the fallback.
+DEFAULT_CSV = next((p for p in (ROOT / 'sim' / 'out' / 'results.csv',
+                                ROOT.parent / 'two-pump-example' / 'out' / 'results.csv') if p.exists()),
+                   ROOT / 'sim' / 'out' / 'results.csv')
 COLUMNS = ['t', 'load', 'Q_it_kW', 'n1', 'n2', 'V1', 'V2', 'V', 'H1', 'H2', 'Hset1', 'P1_1', 'P1_2',
            'T_tcs_sup', 'T_tcs_ret', 'T_fws_sup', 'T_fws_ret', 'Q_hx_kW', 'valve', 'dp_loss', 'p_hdr', 'v_pipe', 'alarm']
 

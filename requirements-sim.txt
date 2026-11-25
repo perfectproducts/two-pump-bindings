@@ -1,0 +1,4 @@
+# FMU co-simulation (sim/run_cosim.py)
+fmpy==0.3.32
+usd-core==26.11      # pipe parameters from sim/pipe_geometry.usda, sim/out/runtime.usda
+matplotlib           # optional: sim/out/*.png charts

@@ -1,0 +1,120 @@
+#usda 1.0
+(
+    "Pipe attributes extracted from the AI factory scene (two-pump-example/usd/piping_brep.usda), geometry omitted. ILLUSTRATIVE. Read by run_cosim.py: pipe FMU parameters and loop inertance."
+)
+
+def Scope "Piping"
+{
+    def Scope "FWS_SuctionHeader"
+    {
+        custom double pipe:bendRadius = 0.13335000000000002
+        custom double pipe:developedLength = 12.216
+        custom double pipe:innerDiameter = 0.0825
+        custom token pipe:loop = "FWS"
+        custom string pipe:material = "carbon steel, EN 10217-1 (illustrative)"
+        custom token pipe:medium = "water"
+        custom int pipe:nominalDiameter = 80
+        custom int pipe:numElbows = 3
+        custom double pipe:outerDiameter = 0.0889
+        custom token pipe:pressureClass = "PN16"
+        custom double pipe:sumK = 2.4
+        custom double pipe:wallThickness = 0.0032
+    }
+
+    def Scope "FWS_Suction_P101"
+    {
+        custom double pipe:bendRadius = 0.11415
+        custom double pipe:developedLength = 1.731
+        custom double pipe:innerDiameter = 0.0703
+        custom token pipe:loop = "FWS"
+        custom string pipe:material = "carbon steel, EN 10217-1 (illustrative)"
+        custom token pipe:medium = "water"
+        custom int pipe:nominalDiameter = 65
+        custom int pipe:numElbows = 1
+        custom double pipe:outerDiameter = 0.0761
+        custom token pipe:pressureClass = "PN16"
+        custom double pipe:sumK = 1.8
+        custom double pipe:wallThickness = 0.0029
+    }
+
+    def Scope "FWS_Suction_P102"
+    {
+        custom double pipe:bendRadius = 0.11415
+        custom double pipe:developedLength = 1.731
+        custom double pipe:innerDiameter = 0.0703
+        custom token pipe:loop = "FWS"
+        custom string pipe:material = "carbon steel, EN 10217-1 (illustrative)"
+        custom token pipe:medium = "water"
+        custom int pipe:nominalDiameter = 65
+        custom int pipe:numElbows = 1
+        custom double pipe:outerDiameter = 0.0761
+        custom token pipe:pressureClass = "PN16"
+        custom double pipe:sumK = 1.8
+        custom double pipe:wallThickness = 0.0029
+    }
+
+    def Scope "FWS_Discharge_P101"
+    {
+        custom double pipe:bendRadius = 0.11415
+        custom double pipe:developedLength = 1.731
+        custom double pipe:innerDiameter = 0.0703
+        custom token pipe:loop = "FWS"
+        custom string pipe:material = "carbon steel, EN 10217-1 (illustrative)"
+        custom token pipe:medium = "water"
+        custom int pipe:nominalDiameter = 65
+        custom int pipe:numElbows = 1
+        custom double pipe:outerDiameter = 0.0761
+        custom token pipe:pressureClass = "PN16"
+        custom double pipe:sumK = 1.8
+        custom double pipe:wallThickness = 0.0029
+    }
+
+    def Scope "FWS_Discharge_P102"
+    {
+        custom double pipe:bendRadius = 0.11415
+        custom double pipe:developedLength = 1.731
+        custom double pipe:innerDiameter = 0.0703
+        custom token pipe:loop = "FWS"
+        custom string pipe:material = "carbon steel, EN 10217-1 (illustrative)"
+        custom token pipe:medium = "water"
+        custom int pipe:nominalDiameter = 65
+        custom int pipe:numElbows = 1
+        custom double pipe:outerDiameter = 0.0761
+        custom token pipe:pressureClass = "PN16"
+        custom double pipe:sumK = 1.8
+        custom double pipe:wallThickness = 0.0029
+    }
+
+    def Scope "FWS_Supply"
+    {
+        custom double pipe:bendRadius = 0.13335000000000002
+        custom double pipe:developedLength = 47.82
+        custom double pipe:innerDiameter = 0.0825
+        custom token pipe:loop = "FWS"
+        custom string pipe:material = "carbon steel, EN 10217-1 (illustrative)"
+        custom token pipe:medium = "water"
+        custom int pipe:nominalDiameter = 80
+        custom int pipe:numElbows = 3
+        custom double pipe:outerDiameter = 0.0889
+        custom token pipe:pressureClass = "PN16"
+        custom double pipe:sumK = 2.4
+        custom double pipe:wallThickness = 0.0032
+    }
+
+    def Scope "FWS_Return"
+    {
+        custom double pipe:bendRadius = 0.13335000000000002
+        custom double pipe:developedLength = 59.333
+        custom double pipe:innerDiameter = 0.0825
+        custom token pipe:loop = "FWS"
+        custom string pipe:material = "carbon steel, EN 10217-1 (illustrative)"
+        custom token pipe:medium = "water"
+        custom int pipe:nominalDiameter = 80
+        custom int pipe:numElbows = 4
+        custom double pipe:outerDiameter = 0.0889
+        custom token pipe:pressureClass = "PN16"
+        custom double pipe:sumK = 2.7
+        custom double pipe:wallThickness = 0.0032
+    }
+}
+
