@@ -97,7 +97,17 @@ class TwinSource:
                 parts = name.split(':')
                 s = src(attr.GetPropertyStack(Usd.TimeCode.Default()))
                 value = attr.Get()
-                if m.get('modelType') == 'MultiLanguageProperty':
+                if m.get('modelType') == 'SubmodelElementList':   # list of values or files: one array attribute
+                    elements[f'{rel}/{parts[1]}'] = Element('SubmodelElementList', None, s)
+                    for n, v in enumerate(value or []):
+                        key = f"{rel}/{parts[1]}/{'t' if s == 'type' else 's'}{n}"
+                        if m.get('typeValueListElement') == 'File' and v.path.startswith(('https://', 'http://')):
+                            elements[key] = Element('File', list(m.get('contentTypes') or [None])[n], s, href=v.path)
+                        elif m.get('typeValueListElement') == 'File':
+                            elements[key] = Element('File', list(m.get('contentTypes') or [None])[n], s, file=self._file_key(v))
+                        else:
+                            elements[key] = Element('Property', v, s)
+                elif m.get('modelType') == 'MultiLanguageProperty':
                     elements[f'{rel}/{parts[1]}@{parts[2]}'] = Element('MultiLanguageProperty', value, s)
                 elif m.get('modelType') == 'File' and value.path.startswith(('https://', 'http://')):
                     elements[f'{rel}/{parts[1]}'] = Element('File', m.get('contentType'), s, href=value.path)

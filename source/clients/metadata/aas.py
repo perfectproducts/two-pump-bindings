@@ -85,14 +85,20 @@ class AasSource:
             self.units[sem] = unit
         return self.units[sem]
 
-    def _flatten(self, sm_href, elements, prefix, idpath, src, out):
-        for e in elements:
-            path, dotted = f"{prefix}/{e['idShort']}", f"{idpath}{e['idShort']}"
+    def _flatten(self, sm_href, elements, prefix, idpath, src, out, in_list=False):
+        for n, e in enumerate(elements):
+            if in_list:   # list items have no idShort: key t<n> (type) / s<n> (serial), API path list[n]
+                path, dotted = f"{prefix}/{'t' if src == 'type' else 's'}{n}", f"{idpath.rstrip('.')}[{n}]"
+            else:
+                path, dotted = f"{prefix}/{e['idShort']}", f"{idpath}{e['idShort']}"
             mt = e['modelType']
             sem = (e.get('semanticId') or {}).get('keys', [{}])[0].get('value')
-            if mt == 'SubmodelElementCollection':
+            if mt == 'SubmodelElementList':
                 out[path] = Element(mt, None, src)
-                self._flatten(sm_href, e.get('value') or [], path, dotted + '.', src, out)
+                self._flatten(sm_href, e.get('value') or [], path, dotted + '.', src, out, in_list=True)
+            elif mt in ('SubmodelElementCollection', 'Entity'):
+                out[path] = Element(mt, None, src)
+                self._flatten(sm_href, e.get('value') or e.get('statements') or [], path, dotted + '.', src, out)
             elif mt == 'MultiLanguageProperty':
                 for t in e.get('value') or []:
                     out[f"{path}@{t['language']}"] = Element(mt, t['text'], src)

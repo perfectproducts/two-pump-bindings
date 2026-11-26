@@ -27,8 +27,8 @@ class Element:
 
 NAMEPLATE = (
     ('Manufacturer', 'Nameplate/ManufacturerName@en'),
-    ('Address', 'Nameplate/AddressOfManufacturer@en'),
-    ('GTIN', 'TechnicalData/GeneralInformation/GTIN'),
+    ('Address', 'Nameplate/AddressInformation'),                       # composed from Street, Zipcode, ...
+    ('GTIN', 'TechnicalData/TechnicalPropertyAreas/*/GTIN'),           # found in the technical property areas
     ('Product', 'Nameplate/ManufacturerProductDesignation@en'),
     ('Product type', 'Nameplate/ManufacturerProductType'),
     ('Article no.', 'Nameplate/ProductArticleNumberOfManufacturer'),
@@ -37,7 +37,22 @@ NAMEPLATE = (
     ('Date of manufacture', 'Nameplate/DateOfManufacture'),
     ('ID link (IEC 61406)', 'Nameplate/URIOfTheProduct'),
 )
-PCF = 'CarbonFootprint/ProductCarbonFootprint'
+PCF = 'CarbonFootprint/ProductCarbonFootprints'
+
+
+def _items(elements, prefix):
+    """List item keys under prefix (t0.. from the product type, s0.. from the serial), type first, in order."""
+    return sorted(_children(elements, prefix), key=lambda k: (k[:1] != 't', int(k[1:]) if k[1:].isdigit() else 0, k))
+
+
+def _address(get):
+    """Nameplate 3.0 AddressInformation -> one line ('Wilopark 1, 44263 Dortmund, DE')."""
+    p = {k: get(f'Nameplate/AddressInformation/{k}@en') for k in ('Street', 'Zipcode', 'CityTown', 'NationalCode')}
+    if not any(p.values()):
+        return None
+    v = {k: (e.value if e else '') for k, e in p.items()}
+    return {'label': 'Address', 'value': f"{v['Street']}, {v['Zipcode']} {v['CityTown']}, {v['NationalCode']}".strip(', '),
+            'unit': None, 'src': next(e for e in p.values() if e).src}
 
 
 def _label(id_short):
@@ -85,21 +100,33 @@ def build(asset_id, elements, source, trace, shell_id=None):
     if not elements:
         return {'asset_id': asset_id, 'status': 'unresolved', 'source': source, 'trace': trace}
     get = elements.get
-    nameplate = [_row(label, get(path)) for label, path in NAMEPLATE if get(path)]
-    technical = [_row(_label(k), get(f'TechnicalData/TechnicalProperties/{k}'))
-                 for k in _children(elements, 'TechnicalData/TechnicalProperties')
-                 if get(f'TechnicalData/TechnicalProperties/{k}')]
+    first = lambda prefix: next(iter(_items(elements, prefix)), None)   # noqa: E731
+    areas = [f'TechnicalData/TechnicalPropertyAreas/{k}' for k in _items(elements, 'TechnicalData/TechnicalPropertyAreas')]
+    gtin = next((get(f'{a}/GTIN') for a in areas if get(f'{a}/GTIN')), None)
+    nameplate = []
+    for label, path in NAMEPLATE:
+        e = _address(get) if label == 'Address' else gtin if label == 'GTIN' else get(path)
+        if e:
+            nameplate.append(e if isinstance(e, dict) else _row(label, e))
+    technical = [_row(_label(k), get(f'{a}/{k}')) for a in areas for k in _children(elements, a)
+                 if get(f'{a}/{k}') and k != 'GTIN']
     technical.sort(key=lambda r: r['label'])     # source-neutral order (USD lists properties sorted)
     documents = []
-    for k in sorted(_children(elements, 'HandoverDocumentation')):
-        base = f'HandoverDocumentation/{k}'
-        f = get(f'{base}/DigitalFile')
-        title = get(f'{base}/Title@en')
-        cls = get(f'{base}/DocumentClassName')
-        documents.append({'title': title.value if title else _label(k), 'class': cls.value if cls else None,
+    for k in _items(elements, 'HandoverDocumentation/Documents'):     # IDTA 02004-2: Documents/[]/DocumentVersions/[]
+        base = f'HandoverDocumentation/Documents/{k}'
+        ver = f'{base}/DocumentVersions/{first(f"{base}/DocumentVersions")}'
+        f = get(f'{ver}/DigitalFiles/{first(f"{ver}/DigitalFiles")}')
+        title = get(f'{ver}/Title@en')
+        cls = get(f'{base}/DocumentClassifications/{first(f"{base}/DocumentClassifications")}/ClassName@en')
+        documents.append({'title': title.value if title else k, 'class': cls.value if cls else None,
                           'url': file_url(f), 'src': (f or title or get(base)).src})
-    markings = [get(f'Nameplate/Markings/{k}/MarkingName').value for k in sorted(_children(elements, 'Nameplate/Markings'))
-                if get(f'Nameplate/Markings/{k}/MarkingName') and k != 'IdentificationLink']
+    markings, label = [], None
+    for k in _items(elements, 'Nameplate/Markings'):
+        name = get(f'Nameplate/Markings/{k}/MarkingName')
+        if name and '61406' in str(name.value):          # the serial's ID-link marking: the DataMatrix label
+            label = get(f'Nameplate/Markings/{k}/MarkingFile')
+        elif name:
+            markings.append(name.value)
     materials = []
     for k in sorted(_children(elements, 'MaterialComposition')):
         base = f'MaterialComposition/{k}'
@@ -108,24 +135,31 @@ def build(asset_id, elements, source, trace, shell_id=None):
             materials.append({'component': name.value, 'material': getattr(material, 'value', None),
                               'mass': fmt(mass.value) if mass else None, 'unit': getattr(mass, 'unit', None),
                               'src': name.src})
-    model = get('SimulationModels/PumpModel/ModelFile')
-    params = get('SimulationModels/ParameterSet/ParameterFile')
-    val = lambda path: getattr(get(path), 'value', None)
+    val = lambda path: getattr(get(path), 'value', None)   # noqa: E731
+    sim = f'SimulationModels/{first("SimulationModels")}'          # IDTA 02005-1-1: SimulationModel01
+    mfv = next((k for k in _children(elements, f'{sim}/ModelFile') if k.startswith('ModelFileVersion')), None)
+    model = get(f'{sim}/ModelFile/{mfv}/DigitalFile') if mfv else None
+    params = get(f'{sim}/ParamFile')                                # the serial's calibration (instance shell)
+    notes = val(f'{sim}/ModelFile/{mfv}/ModelFileReleaseNotesTxt@en') or ''
+    ports = [f'{sim}/Ports/{k}' for k in _children(elements, f'{sim}/Ports')]
+    names = lambda c: ', '.join(val(f'{p}/VariableName') for p in ports if val(f'{p}/VariableCausality') == c) or None  # noqa: E731
     simulation = None if model is None else {
         'model': {'url': file_url(model), 'src': model.src,
-                  'standard': val('SimulationModels/PumpModel/StandardFormat'),
-                  'tool': val('SimulationModels/PumpModel/GenerationTool'),
-                  'platform': val('SimulationModels/PumpModel/Platform'),
-                  'inputs': val('SimulationModels/PumpModel/InputVariables'),
-                  'outputs': val('SimulationModels/PumpModel/OutputVariables')},
+                  'standard': val(f'{sim}/ModelFile/ModelFileType'),
+                  'tool': (re.search(r'Generated by ([^;]+)', notes) or [None, None])[1],
+                  'platform': (re.search(r'binaries: ([^.]+)', notes) or [None, None])[1],
+                  'inputs': names('input'), 'outputs': names('output')},
         'parameters': None if params is None else {
-            'url': file_url(params), 'src': params.src,
-            'applies_to': val('SimulationModels/ParameterSet/AppliesTo'),
-            'values': val('SimulationModels/ParameterSet/ParameterValues')},
+            'url': file_url(params), 'src': params.src, 'applies_to': asset_id if params.src == 'instance' else None,
+            'values': None},
     }
-    pcf = get(f'{PCF}/PCFCO2eq')
-    image = get('TechnicalData/GeneralInformation/ProductImage')
-    label = get('Nameplate/Markings/IdentificationLink/MarkingFile')
+    # IDTA 02023-1-0: ProductCarbonFootprints/[]; the serial's own footprint (s*) wins over the type's (t*)
+    pcfs = _items(elements, PCF)
+    own = next((k for k in pcfs if k.startswith('s')), None)
+    pk = f'{PCF}/{own or (pcfs[0] if pcfs else "")}'
+    pcf = get(f'{pk}/PcfCO2eq') if pcfs else None
+    phases = ', '.join(val(f'{pk}/LifeCyclePhases/{k}') for k in _items(elements, f'{pk}/LifeCyclePhases')) or None
+    image = get(f'TechnicalData/GeneralInformation/ProductImages/{first("TechnicalData/GeneralInformation/ProductImages")}/ImageFile')
     designation = get('Nameplate/ManufacturerProductDesignation@en')
     serial = get('Nameplate/SerialNumber')
     return {
@@ -138,8 +172,8 @@ def build(asset_id, elements, source, trace, shell_id=None):
         'simulation': simulation, 'materials': materials,
         'pcf': None if pcf is None else {
             'value': fmt(pcf.value), 'unit': 'kg CO2e', 'src': pcf.src,
-            'basis': getattr(get(f'{PCF}/ValueBasis'), 'value', None),
-            'phases': getattr(get(f'{PCF}/PCFLifePhase'), 'value', None),
+            'basis': 'instance (this serial)' if pcf.src == 'instance' else 'type (product average)',
+            'phases': phases,
             'note': None if pcf.src == 'instance' else
             'No CarbonFootprint for this serial: product-type value shown (inferred).'},
         'counts': {'instance': sum(e.src == 'instance' for e in elements.values()),
