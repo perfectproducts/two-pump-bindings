@@ -77,7 +77,10 @@ class TwinSource:
                       'ok': True})
 
         def src(stack):
-            return kind if stack and stack[0].layer == root_layer else 'type'
+            # 'instance' when this layer authors the object at its own path (template prims of this layer,
+            # e.g. /_IDTA_02004_Document, also reach elements the serial only inherits from the type)
+            return kind if any(s.layer == root_layer and s.path.GetPrimPath().HasPrefix(root.GetPath())
+                               for s in stack) else 'type'
 
         elements = {}
         for prim in Usd.PrimRange(root):
@@ -88,8 +91,8 @@ class TwinSource:
             elements[rel] = Element(meta.get('modelType', 'SubmodelElementCollection'), None, src(prim.GetPrimStack()))
             for attr in prim.GetAuthoredAttributes():
                 name = attr.GetName()
-                if not name.startswith('aas:'):
-                    continue
+                if not name.startswith('aas:') or not attr.HasAuthoredValue():
+                    continue    # declared by a submodel template layer, not filled for this element
                 m = attr.GetCustomDataByKey('aas') or {}
                 parts = name.split(':')
                 s = src(attr.GetPropertyStack(Usd.TimeCode.Default()))
