@@ -133,12 +133,14 @@ FMPy master -> `sim/out/results.csv` -> BMS replay -> composable bindings.
 | `sim/pipe_geometry.usda` | `pipe:*` attributes taken from the AI factory scene: pipe lengths, diameters and loss coefficients, and the loop inertance computed from them |
 | `sim/run_cosim.py` | FMPy master, fixed step 0.02 s, Gauss-Seidel coupling |
 | `sim/build_fmus.py`, `sim/make_ssd.py` | rebuild the FMUs (needs OpenModelica) and the SSD |
+| `sim/animate_trip.py` | animated trip chart from `results.csv`: `sim/out/trip_animated.gif` and `trip_animated.mp4` (needs ffmpeg) |
 
 ```powershell
 .venv\Scripts\python.exe -m pip install -r requirements-sim.txt
 python sim/run_cosim.py                 # -> sim/out/results.csv (+ charts, runtime.usda)
 python sim/run_cosim.py --delay 30      # longer standby delay
 python sim/run_cosim.py --sweep         # peak rack supply temperature vs. standby delay
+python sim/animate_trip.py              # -> sim/out/trip_animated.gif + .mp4
 ```
 
 Default scenario: the GB300 load steps from 40 % to 100 % (186 -> 464 kW) at 60 s, P-101 trips at
